@@ -1,0 +1,53 @@
+version: '3.8'
+services:
+  mysql-horizon:
+    image: igormamani/mysql-horizon:v2
+    container_name: mysql-horizon
+    environment:
+      MYSQL_ROOT_PASSWORD: senhaRoot
+      MYSQL_DATABASE: projetoHorizon
+      MYSQL_USER: Horizon
+      MYSQL_PASSWORD: horizon123
+    ports:
+      - "3306:3306"
+    networks:
+      - redeHorizon
+    volumes:
+      - ./init-db:/docker-entrypoint-initdb.d
+
+  node-horizon:
+    image: kauanpaschoal/node-horizon:latest
+    container_name: node-horizon
+    build:
+      context: ./projeto/Projeto-Horizon
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - mysql-horizon
+    networks:
+      - redeHorizon
+
+  java-horizon:
+    image: igormamani/java-horizon:v3
+    container_name: java-horizon
+    environment:
+      AWS_ACCESS_KEY_ID: coloquesuachaveaqui
+      AWS_SECRET_ACCESS_KEY: coloquesuachavesecretaaqui
+      AWS_SESSION_TOKEN: coloqueseutokenawsaqui
+      URL_SQL: jdbc:mysql://ipdainstancia:3306/projetoHorizon
+      USER: Horizon
+      SENHA: horizon123
+      NAME_BUCKET: nomedoseubucket
+      URL_SLACK: urldoslack
+      KEY_IA: chavedogemini
+    depends_on:
+      - mysql-horizon
+      - node-horizon
+    networks:
+      - redeHorizon
+    command: ["java", "-jar", "conexao-banco-de-dados-1.0-SNAPSHOT-jar-with-dependencies.jar"]
+
+networks:
+  redeHorizon:
+    driver: bridge
